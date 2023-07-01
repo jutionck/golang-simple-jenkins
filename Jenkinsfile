@@ -1,5 +1,7 @@
 pipeline {
     agent any
+    tools { go 'go1.20.2' }
+
     stages {
         stage("Clone Source") {
             steps {
@@ -11,14 +13,14 @@ pipeline {
         stage("Build") {
             steps {
                 echo 'Build Go'
-                sh 'go build main.go'
+                sh '/usr/local/go/bin/go build main.go'
             }
         }
 
         stage("Test") {
             steps {
                 echo 'Test'
-                sh 'GIN_MODE=release go test -v'
+                sh 'GIN_MODE=release /usr/local/go/bin/go test -v'
             }
         }
     }
