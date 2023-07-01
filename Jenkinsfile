@@ -1,7 +1,5 @@
 pipeline {
     agent any
-    tools { go 'go1.20.2' }
-
     stages {
         stage("Clone Source") {
             steps {
