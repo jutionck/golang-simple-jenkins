@@ -4,7 +4,7 @@ pipeline {
         stage("Clone Source") {
             steps {
                 echo 'Clone Source'
-                git branch: main, url: git@github.com:jutionck/golang-simple-jenkins.git
+                git branch: 'main', url: 'git@github.com:jutionck/golang-simple-jenkins.git'
             }
         }
 
