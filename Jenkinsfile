@@ -28,7 +28,7 @@ pipeline {
         }
         success {
             echo 'This will run only if successful'
-            slackSend "Build deployed successfully - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+            slackSend(channel: '#training', message: 'Pipeline succeeded!')
         }
         failure {
             echo 'This will run only if failed'
