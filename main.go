@@ -127,8 +127,7 @@ func main() {
 	router.POST("/products", NewProductHandler)
 	router.PUT("/products/:id", UpdateProductHandler)
 	router.DELETE("/products/:id", DeleteProductHandler)
-	port := os.Getenv("API_PORT")
-	err := router.Run(":" + port)
+	err := router.Run(":8888")
 	if err != nil {
 		panic("Failed run server")
 	}
