@@ -122,6 +122,7 @@ func main() {
 
 	router := gin.Default()
 	router.GET("/", HomepageHandler)
+	router.GET("/init", InitHandler)
 	router.GET("/products", GetProductHandler)
 	router.POST("/products", NewProductHandler)
 	router.PUT("/products/:id", UpdateProductHandler)
