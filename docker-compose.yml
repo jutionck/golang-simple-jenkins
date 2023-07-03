@@ -1,0 +1,35 @@
+version: "3.8"
+services:
+  backend:
+    build:
+      dockerfile: Dockerfile
+    container_name: product-be
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_NAME=${DB_NAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "${API_PORT}:8080"
+    networks:
+      - product-network
+  db:
+    image: postgres:alpine3.17
+    container_name: product-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=P@ssw0rd
+    restart: always
+    ports:
+      - ${DB_PORT}:5432
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - product-network
+volumes:
+  db-data:
+networks:
+  product-network:

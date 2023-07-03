@@ -1,10 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 type Product struct {
@@ -13,11 +17,6 @@ type Product struct {
 	Price int32  `json:"price"`
 }
 
-var products = []Product{
-	{ID: "P001", Name: "Product A", Price: 100000},
-	{ID: "P002", Name: "Product B", Price: 200000},
-	{ID: "P003", Name: "Product C", Price: 300000},
-}
 
 func HomepageHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Welcome to Golang Simple Jenkins"})
@@ -32,11 +31,21 @@ func NewProductHandler(c *gin.Context) {
 		return
 	}
 	newProduct.ID = uuid.New().String()
-	products = append(products, newProduct)
+	db, err := DbConn()
+	if err != nil {
+		panic(err.Error())
+	}
+	db.Create(&newProduct)
 	c.JSON(http.StatusCreated, newProduct)
 }
 
 func GetProductHandler(c *gin.Context) {
+	db, err := DbConn()
+	if err != nil {
+		panic(err.Error())
+	}
+	var products []Product
+	db.Find(&products)
 	c.JSON(http.StatusOK, products)
 }
 
@@ -49,48 +58,77 @@ func UpdateProductHandler(c *gin.Context) {
 		})
 		return
 	}
-	index := -1
-	for i := 0; i < len(products); i++ {
-		if products[i].ID == id {
-			index = 1
-		}
+	db, err := DbConn()
+	if err != nil {
+		panic(err.Error())
 	}
-	if index == -1 {
+	err = db.Where("id=?", id).First(&product).Error
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Product not found",
 		})
 		return
 	}
-	products[index] = product
+	db.Save(&product)
 	c.JSON(http.StatusOK, product)
 }
 
 func DeleteProductHandler(c *gin.Context) {
 	id := c.Param("id")
-	index := -1
-	for i := 0; i < len(products); i++ {
-		if products[i].ID == id {
-			index = 1
-		}
+	db, err := DbConn()
+	if err != nil {
+		panic(err.Error())
 	}
-	if index == -1 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Producr not found",
-		})
-		return
-	}
-	products = append(products[:index], products[index+1:]...)
+	db.Where("id=?", id).Delete(&Product{})
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Producr has been deleted",
+		"message": "Product has been deleted",
 	})
 }
 
+func InitHandler(c *gin.Context) {
+	var products = []Product{
+		{ID: "P001", Name: "Product A", Price: 100000},
+		{ID: "P002", Name: "Product B", Price: 200000},
+		{ID: "P003", Name: "Product C", Price: 300000},
+	}
+
+	db, err := DbConn()
+  db.AutoMigrate(&Product{})
+	if err != nil {
+		panic(err.Error())
+	}
+
+	db.Create(&products)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Init product",
+	})
+}
+
+func DbConn() (*gorm.DB, error) {
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	dbName := os.Getenv("DB_NAME")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta", host, user, password, dbName, port)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+    return nil, fmt.Errorf("failed to connect database")
+  }
+	return db, nil
+}
+
 func main() {
+
 	router := gin.Default()
 	router.GET("/", HomepageHandler)
 	router.GET("/products", GetProductHandler)
 	router.POST("/products", NewProductHandler)
 	router.PUT("/products/:id", UpdateProductHandler)
 	router.DELETE("/products/:id", DeleteProductHandler)
-	router.Run(":8888")
+	port := os.Getenv("API_PORT")
+	err := router.Run(":" + port)
+	if err != nil {
+		panic("Failed run server")
+	}
 }
