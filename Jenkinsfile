@@ -1,24 +1,32 @@
 pipeline {
     agent any
+    environment {
+        GIT_URL = 'git@github.com:jutionck/golang-simple-jenkins.git'
+        BRANCH = 'with-docker'
+        CHANNEL = '#training'
+        IMAGE = 'my-golang-test'
+        CONTAINER = 'my-golang-test-app'
+        DOCKER_APP = '/usr/local/bin/docker'
+    }
     stages {
-        stage("Clone Source") {
+        stage("Cleaning up") {
             steps {
-                echo 'Clone Source'
-                git branch: 'main', url: 'git@github.com:jutionck/golang-simple-jenkins.git'
+                echo 'Cleaning up'
+                sh "${DOCKER_APP} rm -f ${CONTAINER} || true"
             }
         }
 
-        stage("Build") {
+        stage("Clone") {
             steps {
-                echo 'Build Go'
-                sh '/usr/local/go/bin/go build main.go'
+                echo 'Clone'
+                git branch: "${BRANCH}", url: "${GIT_URL}"
             }
         }
 
-        stage("Test") {
+        stage("Build and Run") {
             steps {
-                echo 'Test'
-                sh 'GIN_MODE=release /usr/local/go/bin/go test -v'
+                echo 'Build and Run'
+                sh "DB_HOST=product-db DB_PORT=5433 DB_NAME=postgres DB_USER=postgres DB_PASSWORD=P@ssw0rd API_PORT=8080 ${DOCKER_APP} compose up"
             }
         }
     }
